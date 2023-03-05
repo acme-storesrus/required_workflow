@@ -1,0 +1,68 @@
+name: Boost Scanners
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+    types:
+      - opened
+      - synchronize
+
+
+jobs:
+  scanner:
+    name: boost
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Execute trivy-bom-dev
+        uses: boostsecurityio/boostsec-scanner-github@v4
+        with:
+          registry_module: boostsecurityio/trivy-sbom
+          api_token: ${{ secrets.BOOST_API_DEV_TOKEN }}
+          api_endpoint: https://api.dev.boostsec.io
+      - name: CodeQL
+        if: github.repository == 'acme-storesrus/cart-service'
+        uses: boostsecurityio/boostsec-scanner-github@v4
+        env:
+          CODEQL_LANGUAGE: python
+        with:
+          api_token: ${{ secrets.BOOST_API_DEV_TOKEN }}
+          api_endpoint: https://api.dev.boostsec.io
+          registry_module: boostsecurityio/codeql
+      - name: native
+        if: github.repository == 'acme-storesrus/account-management'
+        uses: boostsecurityio/boostsec-scanner-github@v4
+        with:
+          api_token: ${{ secrets.BOOST_API_DEV_TOKEN }}
+          api_endpoint: https://api.dev.boostsec.io
+          registry_module: boostsecurityio/native-scanner
+       - name: Bundler audit
+        if: github.repository == 'acme-storesrus/inventory-service'
+        uses: boostsecurityio/boostsec-scanner-github@v4
+        with:
+          api_token: ${{ secrets.BOOST_API_DEV_TOKEN }}
+          api_endpoint: https://api.dev.boostsec.io
+          registry_module: boostsecurityio/bundler-audit
+      - name: Brakeman Dev
+        if: github.repository == 'acme-storesrus/inventory-service'
+        uses: boostsecurityio/boostsec-scanner-github@v4
+        with:
+          api_token: ${{ secrets.BOOST_API_DEV_TOKEN }}
+          api_endpoint: https://api.dev.boostsec.io
+          registry_module: boostsecurityio/brakeman
+      - name: Semgrep with Node.JS
+        if: github.repository == 'acme-storesrus/push-notifications'
+        uses: boostsecurityio/boostsec-scanner-github@v4
+        env:
+          SEMGREP_RULES: p/nodejsscan p/typescript
+        with:
+          api_token: ${{ secrets.BOOST_API_DEV_TOKEN }}
+          api_endpoint: https://api.dev.boostsec.io
+          registry_module: boostsecurityio/semgrep
